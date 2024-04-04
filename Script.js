@@ -66,7 +66,7 @@ async function fetchStatus() {
       const StatusBatery = await axios.post(
         `http://${process.env.ESPIP}/setpoint?btery=${nobreakBatery}`
       );
-      console.log(StatusResponse.data, `\n`, StatusBatery.data);
+      console.log("\n\n", StatusResponse.data, `\n`, StatusBatery.data);
     } catch (error) {
       console.log(error);
     }
