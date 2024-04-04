@@ -59,6 +59,18 @@ async function fetchStatus() {
   }
 
   if (lastState !== nobreakStatus) {
+    try {
+      const StatusResponse = await axios.post(
+        `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
+      );
+      const StatusBatery = await axios.post(
+        `http://${process.env.ESPIP}/setpoint?btery=${nobreakBatery}`
+      );
+      console.log(StatusResponse.data, `\n`, StatusBatery.data);
+    } catch (error) {
+      console.log(error);
+    }
+
     lastState = nobreakStatus;
     if (nobreakStatus == 10 || nobreakStatus == 32) {
       if (nobreakBatery >= 80) {
