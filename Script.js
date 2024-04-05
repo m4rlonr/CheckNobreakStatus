@@ -57,16 +57,29 @@ async function fetchStatus() {
   } catch (error) {
     console.error("[ERRO] - Rquisição falhou.\n", error);
   }
-
-  if (lastState !== nobreakStatus) {
+  if (lastState == 10 || lastState == 32) {
+    console.log(
+      `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
+    );
     try {
-      const StatusResponse = await axios.post(
+      await axios.post(
         `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
       );
-      const StatusBatery = await axios.post(
+      await axios.post(
+        `http://${process.env.ESPIP}/setpoint?batery=${nobreakBatery}`
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  if (lastState !== nobreakStatus) {
+    try {
+      await axios.post(
+        `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
+      );
+      await axios.post(
         `http://${process.env.ESPIP}/setpoint?btery=${nobreakBatery}`
       );
-      console.log("\n\n", StatusResponse.data, `\n`, StatusBatery.data);
     } catch (error) {
       console.log(error);
     }
@@ -109,4 +122,4 @@ async function fetchStatus() {
 
 setInterval(() => {
   fetchStatus();
-}, 5000);
+}, 1000);
