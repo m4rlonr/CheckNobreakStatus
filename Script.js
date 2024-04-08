@@ -69,6 +69,7 @@ async function ParseInfo() {
     nobreakStatus == 10 ||
     nobreakStatus == 32
   ) {
+    lastState = nobreakStatus;
     switch (nobreakStatus) {
       case 10:
         message = `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
