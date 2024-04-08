@@ -16,9 +16,8 @@ var nobreakBatery = null;
 // Guarda o ultimo estado para validar mudanças de estado
 var lastState = null;
 
-// Função para fazer a requisição e pegar o componente com id 'ddata'
+// Busca informacoes o nobreak e guarda em Statis e Batery
 async function fetchStatus() {
-  var data = new Date();
   try {
     // Faz a requisição HTTP
     const response = await axios.get(statusUrl);
@@ -60,89 +59,16 @@ async function fetchStatus() {
   } catch (error) {
     console.error("[ERRO] - Rquisição falhou.\n", error);
   }
-
-  // Functions
-  if (nobreakBatery < 80 && (lastState == 10 || lastState == 32)) {
-    try {
-      await axios.post(
-        `http://${process.env.ESPIP}/setpoint?batery=${nobreakBatery}`
-      );
-    } catch (error) {
-      console.log(Error);
-    }
-    SendMessagemBot(data);
-  }
-
-  if (lastState == 10 || lastState == 32) {
-    console.log(
-      `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
-    );
-    try {
-      await axios.post(
-        `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
-      );
-      await axios.post(
-        `http://${process.env.ESPIP}/setpoint?batery=${nobreakBatery}`
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  // Funcao de mudanca de estado
-  if (lastState !== nobreakStatus) {
-    try {
-      await axios.post(
-        `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
-      );
-      await axios.post(
-        `http://${process.env.ESPIP}/setpoint?btery=${nobreakBatery}`
-      );
-    } catch (error) {
-      console.log(error);
-    }
-
-    lastState = nobreakStatus;
-    if (nobreakStatus == 10 || nobreakStatus == 32) {
-      if (nobreakBatery >= 80) {
-        console.log("\n[AVISO] - Sem energia com baterias acima de 80%");
-      } else if (nobreakBatery >= 60 && nobreakBatery < 80) {
-        console.log("\n[AVISO] - Sem energia com baterias acima de 60%");
-      } else if (nobreakBatery >= 30 && nobreakBatery < 60) {
-        console.log("\n[AVISO] - Iniciar desligamento, Bateria a 30%");
-      }
-    }
-    // Impressão de console
-    switch (nobreakStatus) {
-      case 10:
-        console.log(
-          `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
-        );
-        break;
-      case 11:
-        console.log(
-          `\n[STATUS: ${nobreakStatus}] - Entrada normalizada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
-        );
-        break;
-      case 32:
-        console.log(
-          `\n[STATUS: ${nobreakStatus}] - Aguardando energia\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
-        );
-        break;
-      case 33:
-        console.log(
-          `\n[STATUS: ${nobreakStatus}] - Energia reestabelecida\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`
-        );
-        break;
-    }
-    SendMessagemBot(data);
-  }
 }
 
-// Funcao que manda mensagem com o bot
-async function SendMessagemBot(data) {
-  try {
-    var message = "";
+async function ParseInfo() {
+  var data = new Date();
+  var message = "";
+  if (
+    lastState !== nobreakStatus ||
+    nobreakStatus == 10 ||
+    nobreakStatus == 32
+  ) {
     switch (nobreakStatus) {
       case 10:
         message = `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
@@ -157,13 +83,36 @@ async function SendMessagemBot(data) {
         message = `\n[STATUS: ${nobreakStatus}] - Energia reestabelecida\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
         break;
     }
+    console.log(message);
+    SendBotMessage(message);
+    SendInfoEsp();
+  }
+}
 
-    bot.sendMessage(process.env.CHATID, message);
+async function SendBotMessage(data) {
+  try {
+    await bot.sendMessage(process.env.CHATID, data);
   } catch (error) {
-    console.error("Erro ao enviar a mensagem:", error);
+    console.error("[ERRO] - PROBLEMAS AO ENVIAR MENSAGEM COM BOT");
+  }
+}
+async function SendInfoEsp() {
+  try {
+    await axios.post(
+      `http://${process.env.ESPIP}/setpoint?status=${nobreakStatus}`
+    );
+    await axios.post(
+      `http://${process.env.ESPIP}/setpoint?btery=${nobreakBatery}`
+    );
+  } catch (error) {
+    console.error("[ERRO] - PROBLEMAS AO ENVIAR DADOS PARA ESP32");
   }
 }
 
 setInterval(() => {
   fetchStatus();
-}, 6000);
+}, 10000);
+
+setInterval(() => {
+  ParseInfo();
+}, 25000);
