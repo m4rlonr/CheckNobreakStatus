@@ -64,29 +64,42 @@ async function fetchStatus() {
 async function ParseInfo() {
   var data = new Date();
   var message = "";
-  if (
-    lastState !== nobreakStatus ||
-    nobreakStatus == 10 ||
-    nobreakStatus == 32
-  ) {
-    lastState = nobreakStatus;
-    switch (nobreakStatus) {
-      case 10:
-        message = `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
-        break;
-      case 11:
-        message = `\n[STATUS: ${nobreakStatus}] - Entrada normalizada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
-        break;
-      case 32:
-        message = `\n[STATUS: ${nobreakStatus}] - Aguardando energia\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
-        break;
-      case 33:
-        message = `\n[STATUS: ${nobreakStatus}] - Energia reestabelecida\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
-        break;
-    }
+
+  switch (nobreakStatus) {
+    case 10:
+      message = `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    case 11:
+      message = `\n[STATUS: ${nobreakStatus}] - Entrada normalizada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    case 32:
+      message = `\n[STATUS: ${nobreakStatus}] - Aguardando energia\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    case 33:
+      message = `\n[STATUS: ${nobreakStatus}] - Energia reestabelecida\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    case 2:
+      message = `\n[STATUS: ${nobreakStatus}] - Bateria baixa\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    case 3:
+      message = `\n[STATUS: ${nobreakStatus}] - Bateria normalizada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+    default:
+      message = `\n[STATUS: ${nobreakStatus}] - STATUS DESCONHECIDO\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
+      break;
+  }
+
+  if (nobreakStatus == 10 || nobreakStatus == 32 || nobreakStatus == 2) {
     console.log(message);
     SendBotMessage(message);
-    SendInfoEsp();
+    // SendInfoEsp();
+  } else if (nobreakStatus != lastState) {
+    lastState = nobreakStatus;
+    console.log(message);
+    SendBotMessage(message);
+    // SendInfoEsp();
+  } else {
+    SendBotMessage(message);
   }
 }
 
@@ -116,4 +129,4 @@ setInterval(() => {
 
 setInterval(() => {
   ParseInfo();
-}, 25000);
+}, 11000);
