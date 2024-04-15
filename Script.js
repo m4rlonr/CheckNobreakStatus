@@ -15,6 +15,7 @@ var nobreakBatery = null;
 
 // Guarda o ultimo estado para validar mudanças de estado
 var lastState = null;
+var contador = 0;
 
 // Busca informacoes o nobreak e guarda em Statis e Batery
 async function fetchStatus() {
@@ -61,10 +62,8 @@ async function fetchStatus() {
   }
 }
 
-async function ParseInfo() {
+async function SendBotMessage() {
   var data = new Date();
-  var message = "";
-
   switch (nobreakStatus) {
     case 10:
       message = `\n[STATUS: ${nobreakStatus}] - Falha na entrada\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
@@ -88,28 +87,13 @@ async function ParseInfo() {
       message = `\n[STATUS: ${nobreakStatus}] - STATUS DESCONHECIDO\n[INFO] - Bateria a ${nobreakBatery}%\nHora local: ${data.getHours()}h ${data.getMinutes()}m ${data.getSeconds()}s`;
       break;
   }
-
-  if (nobreakStatus == 10 || nobreakStatus == 32 || nobreakStatus == 2) {
-    console.log(message);
-    SendBotMessage(message);
-    // SendInfoEsp();
-  } else if (nobreakStatus != lastState) {
-    lastState = nobreakStatus;
-    console.log(message);
-    SendBotMessage(message);
-    // SendInfoEsp();
-  } else {
-    SendBotMessage(message);
-  }
-}
-
-async function SendBotMessage(data) {
   try {
-    await bot.sendMessage(process.env.CHATID, data);
+    await bot.sendMessage(process.env.CHATID, message);
   } catch (error) {
     console.error("[ERRO] - PROBLEMAS AO ENVIAR MENSAGEM COM BOT");
   }
 }
+
 async function SendInfoEsp() {
   try {
     await axios.post(
@@ -123,10 +107,28 @@ async function SendInfoEsp() {
   }
 }
 
-setInterval(() => {
+setInterval(async () => {
   fetchStatus();
-}, 10000);
-
-setInterval(() => {
-  ParseInfo();
-}, 11000);
+  if (nobreakStatus !== lastState) {
+    console.log("Mensagem mudanca estado");
+    lastState = nobreakStatus;
+    try {
+      await SendBotMessage();
+    } catch (error) {
+      console.log("Problemas para enviar mensage pelo Bot");
+    }
+  }
+  if (nobreakStatus == 10 || nobreakStatus == 32 || nobreakStatus == 2) {
+    if (contador <= 2) {
+      contador = contador + 1;
+    } else {
+      console.log("Mensagem estado de erro");
+      try {
+        await SendBotMessage();
+      } catch (error) {
+        console.log("Problemas para enviar mensage pelo Bot");
+      }
+      contador = 0;
+    }
+  }
+}, 30000);
